@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import '../../controllers/auth_controller.dart';
 import '../../utils/colors.dart';
 import '../../widgets/dialogs/waiting_dialog.dart';
-import 'onboarding_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   static const String route = "/login";
@@ -64,7 +63,7 @@ class _LoginScreenState extends State<LoginScreen> {
             if (GoRouter.of(context).canPop()) {
               context.pop();
             } else {
-              context.go(OnboardingScreen.route);
+              // context.go(OnboardingScreen.route);
             }
           },
         ),

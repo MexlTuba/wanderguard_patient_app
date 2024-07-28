@@ -2,17 +2,10 @@ import "dart:async";
 import "package:flutter/material.dart";
 import "package:get_it/get_it.dart";
 import "package:go_router/go_router.dart";
-import "package:wanderguard_patient_app/screens/add_patient_screen.dart";
-import "package:wanderguard_patient_app/screens/patient_list_screen.dart";
-
 import "../controllers/auth_controller.dart";
 import "../enum/auth_state.enum.dart";
 import "../screens/auth/login_screen.dart";
-import "../screens/auth/onboarding_screen.dart";
-import "../screens/auth/signup_screen.dart";
 import "../screens/home_screen.dart";
-import "../screens/profile_screen.dart";
-import "../screens/screen_wrapper.dart";
 
 class GlobalRouter {
   static void initialize() {
@@ -31,19 +24,13 @@ class GlobalRouter {
       if (state.matchedLocation == LoginScreen.route) {
         return HomeScreen.route;
       }
-      if (state.matchedLocation == SignupScreen.route) {
-        return HomeScreen.route;
-      }
       return null;
     }
     if (AuthController.instance.state != AuthState.authenticated) {
       if (state.matchedLocation == LoginScreen.route) {
         return null;
       }
-      if (state.matchedLocation == SignupScreen.route) {
-        return null;
-      }
-      return OnboardingScreen.route;
+      return LoginScreen.route;
     }
     return null;
   }
@@ -53,18 +40,10 @@ class GlobalRouter {
     _shellNavigatorKey = GlobalKey<NavigatorState>();
     router = GoRouter(
       navigatorKey: _rootNavigatorKey,
-      initialLocation: OnboardingScreen.route,
+      initialLocation: LoginScreen.route,
       redirect: handleRedirect,
       refreshListenable: AuthController.instance,
       routes: [
-        GoRoute(
-          parentNavigatorKey: _rootNavigatorKey,
-          path: OnboardingScreen.route,
-          name: OnboardingScreen.name,
-          builder: (context, _) {
-            return const OnboardingScreen();
-          },
-        ),
         GoRoute(
           parentNavigatorKey: _rootNavigatorKey,
           path: LoginScreen.route,
@@ -75,44 +54,10 @@ class GlobalRouter {
         ),
         GoRoute(
           parentNavigatorKey: _rootNavigatorKey,
-          path: SignupScreen.route,
-          name: SignupScreen.name,
+          path: HomeScreen.route,
+          name: HomeScreen.name,
           builder: (context, _) {
-            return const SignupScreen();
-          },
-        ),
-        ShellRoute(
-          navigatorKey: _shellNavigatorKey,
-          routes: [
-            GoRoute(
-              parentNavigatorKey: _shellNavigatorKey,
-              path: HomeScreen.route,
-              name: HomeScreen.name,
-              builder: (context, _) {
-                return HomeScreen();
-              },
-            ),
-            GoRoute(
-              parentNavigatorKey: _shellNavigatorKey,
-              path: AddPatientScreen.route,
-              name: AddPatientScreen.name,
-              builder: (context, _) {
-                return AddPatientScreen();
-              },
-            ),
-            GoRoute(
-              parentNavigatorKey: _shellNavigatorKey,
-              path: ProfileScreen.route,
-              name: ProfileScreen.name,
-              builder: (context, _) {
-                return ProfileScreen();
-              },
-            ),
-          ],
-          builder: (context, state, child) {
-            return ScreenWrapper(
-              child: child,
-            );
+            return HomeScreen();
           },
         ),
       ],

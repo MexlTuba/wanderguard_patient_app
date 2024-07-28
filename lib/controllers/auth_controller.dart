@@ -7,6 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:wanderguard_patient_app/controllers/patient_data_controller.dart';
+import 'package:wanderguard_patient_app/models/patient.model.dart';
 import 'package:wanderguard_patient_app/services/firestore_service.dart';
 
 import '../enum/account_type.enum.dart';
@@ -58,11 +60,33 @@ class AuthController with ChangeNotifier {
         password: password,
       );
 
-      final Companion? companion = await FirestoreService.instance
-          .getCompanion(userCredential.user!.uid);
-      CompanionDataController.instance.setCompanion(companion);
-    } catch (e) {
+      if (userCredential.user == null) {
+        throw Exception('User credential is null');
+      }
+
+      final String userId = userCredential.user!.uid;
+      if (userId.isEmpty) {
+        throw Exception('User ID is empty');
+      }
+
+      print('User ID: ${userId.runtimeType}: $userId');
+
+      final Patient? patient =
+          await FirestoreService.instance.getPatient(userId);
+      print(
+          "getPatient Success"); // This should print if getPatient is successful
+      print('Patient data: $patient');
+
+      if (patient == null) {
+        throw Exception('Patient data is null');
+      } else {
+        print('HELLO PATIENT');
+      }
+
+      PatientDataController.instance.setPatient(patient);
+    } catch (e, stacktrace) {
       print('Error logging in user: $e');
+      print('Stacktrace: $stacktrace');
       throw Exception('Failed to log in');
     }
   }

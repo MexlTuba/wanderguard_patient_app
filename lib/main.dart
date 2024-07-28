@@ -1,6 +1,8 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:wanderguard_patient_app/controllers/patient_data_controller.dart';
+import 'package:wanderguard_patient_app/models/patient.model.dart';
 import 'controllers/auth_controller.dart';
 import 'controllers/companion_data_controller.dart';
 import 'firebase_options.dart';
@@ -14,6 +16,7 @@ void main() async {
   );
   AuthController.initialize();
   GlobalRouter.initialize();
+  PatientDataController.initialize();
   CompanionDataController.initialize();
   FirestoreService.initialize();
   await AuthController.instance.loadSession();

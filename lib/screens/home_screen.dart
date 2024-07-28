@@ -3,9 +3,14 @@ import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:get_it/get_it.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:wanderguard_patient_app/controllers/patient_data_controller.dart';
+import 'package:wanderguard_patient_app/models/patient.model.dart';
 
 import 'package:wanderguard_patient_app/utils/colors.dart';
+import 'package:wanderguard_patient_app/widgets/map_action_buttons.dart';
+import 'package:wanderguard_patient_app/widgets/my_companion_card.dart';
 import '../services/information_service.dart';
+import '../widgets/contact_companion_button.dart';
 import '../widgets/dialogs/waiting_dialog.dart';
 import '../controllers/companion_data_controller.dart';
 import '../services/firestore_service.dart';
@@ -40,7 +45,7 @@ class _HomeScreenState extends State<HomeScreen> {
         );
         _loadingLocation = false;
       });
-      _updateCurrentLocation(position);
+      _updateLastLocTracked(position);
     }).catchError((e) {
       setState(() {
         _loadingLocation = false;
@@ -70,14 +75,18 @@ class _HomeScreenState extends State<HomeScreen> {
     return await Geolocator.getCurrentPosition();
   }
 
-  Future<void> _updateCurrentLocation(Position position) async {
+  Future<void> _updateLastLocTracked(Position position) async {
     try {
-      Companion? companion =
-          CompanionDataController.instance.companionModelNotifier.value;
-      if (companion != null) {
-        companion.updateCurrentLocation(
+      Patient? patient =
+          PatientDataController.instance.patientModelNotifier.value;
+      if (patient != null) {
+        print('Patient Home Address: ${patient.homeAddress}');
+        patient.updateLastLocTracked(
             GeoPoint(position.latitude, position.longitude));
-        await FirestoreService.instance.addOrUpdateCompanion(companion);
+        await FirestoreService.instance.addOrUpdatePatient(patient);
+      } else {
+        Info.showSnackbarMessage(context,
+            message: "Patient data is not available", label: "Error");
       }
     } catch (e) {
       Info.showSnackbarMessage(context,
@@ -93,15 +102,63 @@ class _HomeScreenState extends State<HomeScreen> {
               prompt: "Loading...",
               color: CustomColors.primaryColor,
             )
-          : GoogleMap(
-              initialCameraPosition: _initialPosition,
-              mapType: MapType.normal,
-              myLocationEnabled: true,
-              myLocationButtonEnabled: true,
-              zoomControlsEnabled: false,
-              onMapCreated: (GoogleMapController controller) {
-                _controller = controller;
-              },
+          : SafeArea(
+              child: Stack(
+                children: [
+                  GoogleMap(
+                    initialCameraPosition: _initialPosition,
+                    mapType: MapType.normal,
+                    myLocationEnabled: true,
+                    myLocationButtonEnabled: true,
+                    zoomControlsEnabled: false,
+                    padding: EdgeInsets.only(bottom: 250),
+                    onMapCreated: (GoogleMapController controller) {
+                      _controller = controller;
+                    },
+                  ),
+                  Positioned(
+                    bottom: 16.0,
+                    left: 16.0,
+                    right: 16.0,
+                    child: ContactCompanionButton(
+                        text: '(LOGOUT)Contact Companion'),
+                  ),
+                  Positioned(
+                      bottom: 80.0,
+                      left: 16.0,
+                      right: 16.0,
+                      child: Column(
+                        children: [
+                          MapActionButtons(
+                            onFirstButtonPressed: () {
+                              Info.showSnackbarMessage(context,
+                                  message: "First button pressed",
+                                  label: "Info");
+                            },
+                            onSecondButtonPressed: () {
+                              Info.showSnackbarMessage(context,
+                                  message: "Second button pressed",
+                                  label: "Info");
+                            },
+                            onThirdButtonPressed: () {
+                              Info.showSnackbarMessage(context,
+                                  message: "Third button pressed",
+                                  label: "Info");
+                            },
+                          ),
+                          SizedBox(height: 11),
+                          CompanionCard(
+                            name: 'Mexl Delver Tuba',
+                            phoneNumber: '+639081102982',
+                            address: '12 orchid street, Capitol site',
+                            relationship: 'Nephew',
+                            imageUrl:
+                                'https://firebasestorage.googleapis.com/v0/b/wanderguard-1e83a.appspot.com/o/Homeroom.jpg?alt=media&token=9a47fa78-4cdb-433a-9e77-f69e489302d9',
+                          ),
+                        ],
+                      )),
+                ],
+              ),
             ),
     );
   }
