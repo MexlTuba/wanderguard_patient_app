@@ -33,12 +33,14 @@ class _HomeScreenState extends State<HomeScreen> {
   );
   bool _loadingLocation = true;
   late GoogleMapController _controller;
+  late Position _currentPosition;
 
   @override
   void initState() {
     super.initState();
     _determinePosition().then((position) {
       setState(() {
+        _currentPosition = position;
         _initialPosition = CameraPosition(
           target: LatLng(position.latitude, position.longitude),
           zoom: 15,
@@ -114,6 +116,16 @@ class _HomeScreenState extends State<HomeScreen> {
                     padding: EdgeInsets.only(bottom: 250),
                     onMapCreated: (GoogleMapController controller) {
                       _controller = controller;
+                      // Animate camera to the current location when the map is created
+                      _controller.animateCamera(
+                        CameraUpdate.newCameraPosition(
+                          CameraPosition(
+                            target: LatLng(_currentPosition.latitude,
+                                _currentPosition.longitude),
+                            zoom: 15,
+                          ),
+                        ),
+                      );
                     },
                   ),
                   Positioned(

@@ -19,7 +19,7 @@ class Patient {
   final AccountType acctType;
   final AccountStatus acctStatus;
   GeoPoint lastLocTracked;
-  final DateTime lastLocUpdated;
+  DateTime lastLocUpdated;
   final Geofence defaultGeofence;
   final List<Geofence> geofences;
   final List<EmergencyContact> emergencyContacts;
@@ -50,6 +50,7 @@ class Patient {
   });
   void updateLastLocTracked(GeoPoint newLocation) {
     lastLocTracked = newLocation;
+    lastLocUpdated = DateTime.now();
   }
 
   // Convert Patient to Firestore document
