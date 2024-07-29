@@ -1,15 +1,14 @@
 import 'dart:async';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:wanderguard_patient_app/services/firestore_service.dart';
+import 'package:wanderguard_patient_app/services/location_service.dart';
 import '../models/patient.model.dart';
 
 class PatientDataController with ChangeNotifier {
   ValueNotifier<Patient?> patientModelNotifier = ValueNotifier(null);
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? patientStream;
+  LocationService _locationService = LocationService();
 
   static void initialize() {
     GetIt.instance
@@ -24,8 +23,10 @@ class PatientDataController with ChangeNotifier {
     notifyListeners();
     if (patient != null) {
       listenToPatientChanges(patient.patientAcctId);
+      _locationService.listenLocation(patient.patientAcctId);
     } else {
       patientStream?.cancel();
+      _locationService.stopListening();
       patientStream = null;
     }
   }
@@ -53,6 +54,7 @@ class PatientDataController with ChangeNotifier {
   @override
   void dispose() {
     patientStream?.cancel();
+    // _locationService.stopListening();
     super.dispose();
   }
 }

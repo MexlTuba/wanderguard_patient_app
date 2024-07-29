@@ -73,8 +73,7 @@ class AuthController with ChangeNotifier {
 
       final Patient? patient =
           await FirestoreService.instance.getPatient(userId);
-      print(
-          "getPatient Success"); // This should print if getPatient is successful
+      print("getPatient Success");
       print('Patient data: $patient');
 
       if (patient == null) {

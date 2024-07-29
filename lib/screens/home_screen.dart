@@ -5,7 +5,7 @@ import 'package:get_it/get_it.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:wanderguard_patient_app/controllers/patient_data_controller.dart';
 import 'package:wanderguard_patient_app/models/patient.model.dart';
-
+import 'package:wanderguard_patient_app/services/location_service.dart';
 import 'package:wanderguard_patient_app/utils/colors.dart';
 import 'package:wanderguard_patient_app/widgets/map_action_buttons.dart';
 import 'package:wanderguard_patient_app/widgets/my_companion_card.dart';
@@ -34,66 +34,57 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _loadingLocation = true;
   late GoogleMapController _controller;
   late Position _currentPosition;
+  final LocationService _locationService = LocationService();
 
   @override
   void initState() {
     super.initState();
-    _determinePosition().then((position) {
-      setState(() {
-        _currentPosition = position;
-        _initialPosition = CameraPosition(
-          target: LatLng(position.latitude, position.longitude),
-          zoom: 15,
-        );
-        _loadingLocation = false;
+    _initializeLocation();
+  }
+
+  Future<void> _initializeLocation() async {
+    try {
+      await _locationService.requestPermission();
+      _determinePosition().then((position) {
+        setState(() {
+          _currentPosition = position;
+          _initialPosition = CameraPosition(
+            target: LatLng(position.latitude, position.longitude),
+            zoom: 15,
+          );
+          _loadingLocation = false;
+          // // Start listening to location updates
+          // Patient? patient =
+          //     PatientDataController.instance.patientModelNotifier.value;
+          // if (patient != null) {
+          //   _locationService.listenLocation(patient.patientAcctId);
+          //   print("Now Tracking Live Location");
+          // }
+        });
+      }).catchError((e) {
+        setState(() {
+          _loadingLocation = false;
+        });
+        Info.showSnackbarMessage(context,
+            message: e.toString(), label: "Error");
       });
-      _updateLastLocTracked(position);
-    }).catchError((e) {
+    } catch (e) {
       setState(() {
         _loadingLocation = false;
       });
       Info.showSnackbarMessage(context, message: e.toString(), label: "Error");
-    });
+    }
   }
 
   Future<Position> _determinePosition() async {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      throw 'Location services are disabled.';
-    }
-
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        throw 'Location permissions are denied';
-      }
-    }
-
-    if (permission == LocationPermission.deniedForever) {
-      throw 'Location permissions are permanently denied, we cannot request permissions.';
-    }
-
+    print('Determining position...');
     return await Geolocator.getCurrentPosition();
   }
 
-  Future<void> _updateLastLocTracked(Position position) async {
-    try {
-      Patient? patient =
-          PatientDataController.instance.patientModelNotifier.value;
-      if (patient != null) {
-        print('Patient Home Address: ${patient.homeAddress}');
-        patient.updateLastLocTracked(
-            GeoPoint(position.latitude, position.longitude));
-        await FirestoreService.instance.addOrUpdatePatient(patient);
-      } else {
-        Info.showSnackbarMessage(context,
-            message: "Patient data is not available", label: "Error");
-      }
-    } catch (e) {
-      Info.showSnackbarMessage(context,
-          message: "Failed to update location: $e", label: "Error");
-    }
+  @override
+  void dispose() {
+    _locationService.stopListening();
+    super.dispose();
   }
 
   @override
@@ -116,7 +107,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     padding: EdgeInsets.only(bottom: 250),
                     onMapCreated: (GoogleMapController controller) {
                       _controller = controller;
-                      // Animate camera to the current location when the map is created
                       _controller.animateCamera(
                         CameraUpdate.newCameraPosition(
                           CameraPosition(

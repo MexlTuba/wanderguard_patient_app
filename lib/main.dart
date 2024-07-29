@@ -8,6 +8,7 @@ import 'controllers/companion_data_controller.dart';
 import 'firebase_options.dart';
 import 'routing/router.dart';
 import 'services/firestore_service.dart';
+import 'services/location_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,6 +21,7 @@ void main() async {
   CompanionDataController.initialize();
   FirestoreService.initialize();
   await AuthController.instance.loadSession();
+  await LocationService().requestPermission();
   runApp(const MyApp());
 }
 
@@ -33,7 +35,7 @@ class MyApp extends StatelessWidget {
         return MaterialApp.router(
           debugShowCheckedModeBanner: false,
           routerConfig: GlobalRouter.I.router,
-          title: 'WanderGuard Companion App',
+          title: 'WanderGuard Patient App',
           theme: ThemeData(
             colorScheme: ColorScheme.fromSeed(seedColor: Colors.white),
             textTheme: GoogleFonts.poppinsTextTheme(

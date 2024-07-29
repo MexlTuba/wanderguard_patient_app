@@ -48,10 +48,10 @@ class Patient {
     required this.updatedAt,
     required this.companionAcctId,
   });
-  void updateLastLocTracked(GeoPoint newLocation) {
-    lastLocTracked = newLocation;
-    lastLocUpdated = DateTime.now();
-  }
+  // void updateLastLocTracked(GeoPoint newLocation) {
+  //   lastLocTracked = newLocation;
+  //   lastLocUpdated = DateTime.now();
+  // }
 
   // Convert Patient to Firestore document
   Map<String, dynamic> toFirestore() {
