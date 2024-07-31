@@ -61,8 +61,7 @@ class Companion {
       address: data['address'],
       contactNo: data['contactNo'],
       photoUrl: data['photoUrl'],
-      acctType: AccountType.values
-          .firstWhere((e) => e.toString() == data['acctType']),
+      acctType: AccountTypeExtension.fromString(data['acctType']),
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       updatedAt: (data['updatedAt'] as Timestamp).toDate(),
       currentLocation: data['currentLocation'],

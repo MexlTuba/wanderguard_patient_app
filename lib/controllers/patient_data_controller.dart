@@ -8,7 +8,6 @@ import '../models/patient.model.dart';
 class PatientDataController with ChangeNotifier {
   ValueNotifier<Patient?> patientModelNotifier = ValueNotifier(null);
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? patientStream;
-  LocationService _locationService = LocationService();
 
   static void initialize() {
     GetIt.instance
@@ -23,10 +22,8 @@ class PatientDataController with ChangeNotifier {
     notifyListeners();
     if (patient != null) {
       listenToPatientChanges(patient.patientAcctId);
-      _locationService.listenLocation(patient.patientAcctId);
     } else {
       patientStream?.cancel();
-      _locationService.stopListening();
       patientStream = null;
     }
   }

@@ -1,16 +1,15 @@
 import 'dart:async';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:get_it/get_it.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wanderguard_patient_app/controllers/patient_data_controller.dart';
 import 'package:wanderguard_patient_app/models/patient.model.dart';
 import 'package:wanderguard_patient_app/services/firestore_service.dart';
-
 import '../enum/account_type.enum.dart';
 import '../enum/auth_state.enum.dart';
 import '../models/companion.model.dart';
@@ -44,10 +43,12 @@ class AuthController with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     if (user == null) {
       state = AuthState.unauthenticated;
-      await prefs.remove('companionAcctId');
+      await prefs.remove('patientAcctId');
     } else {
       state = AuthState.authenticated;
-      await prefs.setString('companionAcctId', user.uid);
+      await prefs.setString('patientAcctId', user.uid);
+      final service = FlutterBackgroundService();
+      service.invoke('setPatientId', {'patientId': user.uid});
     }
     notifyListeners();
   }
@@ -82,6 +83,16 @@ class AuthController with ChangeNotifier {
         print('HELLO PATIENT');
       }
 
+      // Start the background service and set the patient ID
+      final service = FlutterBackgroundService();
+      print('Starting Background Service...');
+      await service.startService();
+      await Future.delayed(
+          Duration(seconds: 2)); // Ensure the service is started
+      print('Invoking Background setPatientId...');
+      service.invoke('setPatientId', {'patientId': userId});
+
+      print('Setting Patient...');
       PatientDataController.instance.setPatient(patient);
     } catch (e, stacktrace) {
       print('Error logging in user: $e');
@@ -101,61 +112,47 @@ class AuthController with ChangeNotifier {
     FirebaseAuth.instance.signInWithCredential(credential);
   }
 
-  Future<void> register(
-      String email,
-      String password,
-      String firstName,
-      String lastName,
-      String contactNo,
-      String address,
-      GeoPoint currentLocation) async {
-    try {
-      final auth.UserCredential userCredential =
-          await _auth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-
-      final Companion newCompanion = Companion(
-        companionAcctId: userCredential.user!.uid,
-        firstName: firstName,
-        lastName: lastName,
-        email: email,
-        address: address,
-        currentLocation: currentLocation,
-        contactNo: contactNo,
-        photoUrl: '',
-        acctType: AccountType.primaryCompanion,
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      );
-
-      await FirestoreService.instance.addOrUpdateCompanion(newCompanion);
-      CompanionDataController.instance.setCompanion(newCompanion);
-    } catch (e) {
-      throw Exception(e.toString());
-    }
-  }
-
   Future<void> logout() async {
-    if (_googleSignIn.currentUser != null) {
-      _googleSignIn.signOut();
+    try {
+      // Stop the background service
+      final service = FlutterBackgroundService();
+      service.invoke("stopService");
+
+      // Sign out from Google if signed in
+      if (_googleSignIn.currentUser != null) {
+        await _googleSignIn.signOut();
+      }
+
+      // Sign out from Firebase
+      await _auth.signOut();
+
+      // Clear local data
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('patientAcctId');
+
+      // Reset patient data
+      PatientDataController.instance.setPatient(null);
+
+      // Notify listeners to update UI
+      state = AuthState.unauthenticated;
+      notifyListeners();
+
+      print('Successfully logged out and reset state');
+    } catch (e) {
+      print('Error during logout: $e');
+      throw Exception('Failed to log out');
     }
-    await _auth.signOut();
-    CompanionDataController.instance.setCompanion(null);
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('companionAcctId');
   }
 
   Future<void> loadSession() async {
     listen();
     final prefs = await SharedPreferences.getInstance();
-    String? companionAcctId = prefs.getString('companionAcctId');
-    if (companionAcctId != null) {
+    String? patientAcctId = prefs.getString('patientAcctId');
+    if (patientAcctId != null) {
       try {
-        final Companion? companion =
-            await FirestoreService.instance.getCompanion(companionAcctId);
-        CompanionDataController.instance.setCompanion(companion);
+        final Patient? patient =
+            await FirestoreService.instance.getPatient(patientAcctId);
+        PatientDataController.instance.setPatient(patient);
         handleUserChanges(FirebaseAuth.instance.currentUser);
       } catch (e) {
         print('Error loading user session: $e');

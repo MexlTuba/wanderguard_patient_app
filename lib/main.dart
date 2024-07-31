@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:wanderguard_patient_app/controllers/patient_data_controller.dart';
 import 'package:wanderguard_patient_app/models/patient.model.dart';
+import 'package:wanderguard_patient_app/services/background_service.dart';
 import 'controllers/auth_controller.dart';
 import 'controllers/companion_data_controller.dart';
 import 'firebase_options.dart';
@@ -22,6 +23,7 @@ void main() async {
   FirestoreService.initialize();
   await AuthController.instance.loadSession();
   await LocationService().requestPermission();
+  await initializeService();
   runApp(const MyApp());
 }
 
