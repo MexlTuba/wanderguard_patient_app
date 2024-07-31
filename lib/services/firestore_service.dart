@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
 import 'package:get_it/get_it.dart';
 
 import '../enum/account_status.enum.dart';
@@ -25,10 +24,16 @@ class FirestoreService {
   }
 
   Future<Companion?> getCompanion(String companionAcctId) async {
+    print("Fetching companion with ID: $companionAcctId");
     final companionRef = _db.collection('companions').doc(companionAcctId);
+    print("Companion ref: $companionRef");
     final doc = await companionRef.get();
+    print("Companion doc: $doc");
     if (doc.exists) {
+      print("SUCCESS: Companion found!");
       return Companion.fromFirestore(doc);
+    } else {
+      print("ERROR: Companion not found!");
     }
     return null;
   }
