@@ -11,7 +11,7 @@ class LocationService {
   }
 
   Future<void> requestPermission() async {
-    print('Requesting permissions...');
+    print('Requesting permissions......');
     try {
       var locationStatus = await Permission.locationWhenInUse.request();
       print('Foreground location permission status: $locationStatus');
