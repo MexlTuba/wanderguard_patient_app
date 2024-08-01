@@ -10,6 +10,7 @@ import 'firebase_options.dart';
 import 'routing/router.dart';
 import 'services/firestore_service.dart';
 import 'services/location_service.dart';
+import 'utils/size_config.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,6 +33,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    SizeConfig().init(context);
     return Builder(
       builder: (context) {
         return MaterialApp.router(

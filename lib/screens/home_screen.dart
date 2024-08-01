@@ -1,9 +1,9 @@
 import 'dart:async';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -14,6 +14,7 @@ import 'package:wanderguard_patient_app/services/location_service.dart';
 import 'package:wanderguard_patient_app/utils/colors.dart';
 import 'package:wanderguard_patient_app/widgets/map_action_buttons.dart';
 import 'package:wanderguard_patient_app/widgets/my_companion_card.dart';
+import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import '../controllers/auth_controller.dart';
 import '../services/information_service.dart';
 import '../widgets/contact_companion_button.dart';
@@ -38,10 +39,13 @@ class _HomeScreenState extends State<HomeScreen> {
   );
   bool _loadingLocation = true;
   bool _loadingCompanion = true;
+  bool _polylineVisible = false;
   late GoogleMapController _controller;
   late Position _currentPosition;
   final LocationService _locationService = LocationService();
   Companion? _companion;
+  List<LatLng> _polylineCoordinates = [];
+  PolylinePoints polylinePoints = PolylinePoints();
 
   @override
   void initState() {
@@ -143,6 +147,78 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _togglePolylineToHome() async {
+    if (_polylineVisible) {
+      setState(() {
+        _polylineCoordinates.clear();
+        _polylineVisible = false;
+      });
+    } else {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return Dialog(
+            backgroundColor: Colors.white,
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SpinKitRipple(
+                    color: CustomColors.primaryColor,
+                    size: 60,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    "Locating Home...",
+                    style: TextStyle(color: CustomColors.primaryColor),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+      await _drawPolylineToHome();
+      Navigator.of(context).pop();
+      setState(() {
+        _polylineVisible = true;
+      });
+    }
+  }
+
+  Future<void> _drawPolylineToHome() async {
+    Patient? patient =
+        PatientDataController.instance.patientModelNotifier.value;
+    if (patient != null) {
+      List<Location> locations = await locationFromAddress(patient.homeAddress);
+      if (locations.isNotEmpty) {
+        Location homeLocation = locations.first;
+        PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
+          googleApiKey: 'AIzaSyDOlsE9ugND1vY-T9oR91QyR86Sk_DrksY',
+          request: PolylineRequest(
+            origin: PointLatLng(
+                _currentPosition.latitude, _currentPosition.longitude),
+            destination:
+                PointLatLng(homeLocation.latitude, homeLocation.longitude),
+            mode: TravelMode.driving,
+          ),
+        );
+        if (result.points.isNotEmpty) {
+          setState(() {
+            _polylineCoordinates.clear();
+            result.points.forEach((PointLatLng point) {
+              _polylineCoordinates.add(LatLng(point.latitude, point.longitude));
+            });
+          });
+        } else {
+          print('Error: ${result.errorMessage}');
+        }
+      }
+    }
+  }
+
   Future<Position> _determinePosition() async {
     print('Determining position...');
     return await Geolocator.getCurrentPosition(
@@ -173,6 +249,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     myLocationEnabled: true,
                     myLocationButtonEnabled: true,
                     zoomControlsEnabled: false,
+                    polylines: {
+                      Polyline(
+                        polylineId: PolylineId('poly'),
+                        color: Colors.blue,
+                        points: _polylineCoordinates,
+                      ),
+                    },
                     padding: EdgeInsets.only(bottom: 250),
                     onMapCreated: (GoogleMapController controller) {
                       _controller = controller;
@@ -206,13 +289,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                   label: "Info");
                             },
                             onSecondButtonPressed: () {
-                              Info.showSnackbarMessage(context,
-                                  message: "Second button pressed",
-                                  label: "Info");
+                              _togglePolylineToHome();
                             },
                             onThirdButtonPressed: () {
                               AuthController.instance.logout();
                             },
+                            isPolylineVisible: _polylineVisible,
                           ),
                           SizedBox(height: 11),
                           _companion != null

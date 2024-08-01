@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:wanderguard_patient_app/models/companion.model.dart';
 import 'package:wanderguard_patient_app/services/firestore_service.dart';
 import 'package:wanderguard_patient_app/controllers/patient_data_controller.dart';
+import 'package:wanderguard_patient_app/utils/colors.dart';
 import '../models/patient.model.dart';
 import '../widgets/backup_companion_card.dart';
 import '../widgets/call_companion_button.dart';
@@ -69,7 +70,8 @@ class _CallCompanionScreenState extends State<CallCompanionScreen> {
       backgroundColor: Colors.grey[100],
       body: SafeArea(
         child: _loadingCompanion
-            ? WaitingDialog(prompt: "Loading...", color: Colors.blue)
+            ? WaitingDialog(
+                prompt: "Loading...", color: CustomColors.primaryColor)
             : Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
