@@ -5,12 +5,14 @@ class MapActionButtons extends StatelessWidget {
   final VoidCallback onFirstButtonPressed;
   final VoidCallback onSecondButtonPressed;
   final VoidCallback onThirdButtonPressed;
+  final bool isPolylineVisible;
 
   const MapActionButtons({
     Key? key,
     required this.onFirstButtonPressed,
     required this.onSecondButtonPressed,
     required this.onThirdButtonPressed,
+    required this.isPolylineVisible,
   }) : super(key: key);
 
   @override
@@ -20,7 +22,8 @@ class MapActionButtons extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         _buildActionButton(Icons.note, onFirstButtonPressed, 50),
-        _buildActionButton(Icons.home, onSecondButtonPressed, 60),
+        _buildActionButton(isPolylineVisible ? Icons.close : Icons.home,
+            onSecondButtonPressed, 60),
         _buildActionButton(Icons.medical_services, onThirdButtonPressed, 50),
       ],
     );

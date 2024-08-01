@@ -56,7 +56,7 @@ class BackupCompanionCard extends StatelessWidget {
           ],
         ),
         trailing: IconButton(
-          icon: Icon(Icons.phone, color: Colors.purple),
+          icon: Icon(Icons.phone, color: Colors.deepPurpleAccent),
           onPressed: () {
             // Call action
           },

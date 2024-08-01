@@ -24,7 +24,7 @@ class ContactCompanionButton extends StatelessWidget {
       },
       child: Text(
         text,
-        style: const TextStyle(color: Colors.white),
+        style: const TextStyle(fontSize: 18, color: Colors.white),
       ),
     );
   }
