@@ -14,6 +14,7 @@ import 'package:wanderguard_patient_app/services/location_service.dart';
 import 'package:wanderguard_patient_app/utils/colors.dart';
 import 'package:wanderguard_patient_app/widgets/map_action_buttons.dart';
 import 'package:wanderguard_patient_app/widgets/my_companion_card.dart';
+import '../controllers/auth_controller.dart';
 import '../services/information_service.dart';
 import '../widgets/contact_companion_button.dart';
 import '../widgets/dialogs/waiting_dialog.dart';
@@ -190,8 +191,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     bottom: 16.0,
                     left: 16.0,
                     right: 16.0,
-                    child: ContactCompanionButton(
-                        text: '(LOGOUT)Contact Companion'),
+                    child: ContactCompanionButton(text: 'Contact Companion'),
                   ),
                   Positioned(
                       bottom: 80.0,
@@ -211,9 +211,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   label: "Info");
                             },
                             onThirdButtonPressed: () {
-                              Info.showSnackbarMessage(context,
-                                  message: "Third button pressed",
-                                  label: "Info");
+                              AuthController.instance.logout();
                             },
                           ),
                           SizedBox(height: 11),
