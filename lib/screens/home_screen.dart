@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:geocoding/geocoding.dart';
@@ -173,7 +174,34 @@ class HomeScreenState extends State<HomeScreen> {
         },
       );
       hideLoadingDialog(context);
+      _zoomOutAndCenter();
     }
+  }
+
+  void _zoomOutAndCenter() {
+    LatLngBounds bounds = _getPolylineBounds(_polylineCoordinates);
+    _controller.animateCamera(
+      CameraUpdate.newLatLngBounds(bounds, 135),
+    );
+  }
+
+  LatLngBounds _getPolylineBounds(List<LatLng> polylineCoordinates) {
+    double minLat = polylineCoordinates[0].latitude;
+    double minLng = polylineCoordinates[0].longitude;
+    double maxLat = polylineCoordinates[0].latitude;
+    double maxLng = polylineCoordinates[0].longitude;
+
+    for (LatLng point in polylineCoordinates) {
+      if (point.latitude < minLat) minLat = point.latitude;
+      if (point.longitude < minLng) minLng = point.longitude;
+      if (point.latitude > maxLat) maxLat = point.latitude;
+      if (point.longitude > maxLng) maxLng = point.longitude;
+    }
+
+    return LatLngBounds(
+      southwest: LatLng(minLat, minLng),
+      northeast: LatLng(maxLat, maxLng),
+    );
   }
 
   void _drawGeofences(Patient patient) {

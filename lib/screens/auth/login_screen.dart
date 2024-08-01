@@ -152,7 +152,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                           color: CustomColors.primaryColor)))
                             ],
                           ),
-                          const SizedBox(height: 40),
+                          const SizedBox(height: 20),
                           MaterialButton(
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),

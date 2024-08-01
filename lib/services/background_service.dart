@@ -2,29 +2,40 @@ import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter_background_service_android/flutter_background_service_android.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wanderguard_patient_app/services/location_service.dart';
+
+import '../utils/colors.dart';
 
 Future<void> initializeService() async {
   print('Entered initializeService');
   final service = FlutterBackgroundService();
 
-  const AndroidNotificationChannel channel = AndroidNotificationChannel(
-    'my_foreground', // id
-    'MY FOREGROUND SERVICE', // title
-    description:
-        'This channel is used for important notifications.', // description
-    importance: Importance.low,
+  await AwesomeNotifications().initialize(
+    'resource://drawable/logo_purple',
+    [
+      NotificationChannel(
+        channelGroupKey: 'my_foreground_group',
+        channelKey: 'my_foreground',
+        channelName: 'MY FOREGROUND SERVICE',
+        channelDescription: 'This channel is used for important notifications.',
+        defaultColor: CustomColors.primaryColor,
+        ledColor: Colors.white,
+        importance: NotificationImportance.Low,
+        locked: true,
+      ),
+    ],
+    debug: true,
   );
 
-  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-      FlutterLocalNotificationsPlugin();
-
-  await flutterLocalNotificationsPlugin
-      .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>()
-      ?.createNotificationChannel(channel);
+  AwesomeNotifications().setListeners(
+    onNotificationCreatedMethod: onNotificationCreatedMethod,
+    onNotificationDisplayedMethod: onNotificationDisplayedMethod,
+    onDismissActionReceivedMethod: onDismissActionReceivedMethod,
+    onActionReceivedMethod: onActionReceivedMethod,
+  );
 
   await service.configure(
     androidConfiguration: AndroidConfiguration(
@@ -53,16 +64,21 @@ Future<bool> onIosBackground(ServiceInstance service) async {
 }
 
 @pragma('vm:entry-point')
-void onStart(ServiceInstance service) async {
+Future<void> onStart(ServiceInstance service) async {
   print('Entered onStart');
   WidgetsFlutterBinding.ensureInitialized();
   DartPluginRegistrant.ensureInitialized();
 
-  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-      FlutterLocalNotificationsPlugin();
-
   String? patientId;
   print('Initial patient ID: $patientId');
+
+  // Retrieve patient ID from shared preferences
+  final prefs = await SharedPreferences.getInstance();
+  patientId = prefs.getString('patientAcctId');
+  if (patientId != null) {
+    print('Retrieved patient ID from shared preferences: $patientId');
+    startLocationTracking(patientId);
+  }
 
   service.on('setPatientId').listen((event) {
     patientId = event?['patientId'];
@@ -81,19 +97,7 @@ void onStart(ServiceInstance service) async {
     print('Timer running...');
     if (service is AndroidServiceInstance) {
       if (await service.isForegroundService()) {
-        flutterLocalNotificationsPlugin.show(
-          888,
-          'WanderGuard Service',
-          'Running ${DateTime.now()}',
-          const NotificationDetails(
-            android: AndroidNotificationDetails(
-              'my_foreground',
-              'MY FOREGROUND SERVICE',
-              icon: 'ic_bg_service_small',
-              ongoing: true,
-            ),
-          ),
-        );
+        createPersistentNotification();
       }
     }
   });
@@ -103,4 +107,42 @@ void startLocationTracking(String patientId) {
   final locationService = LocationService();
   print('Listening to location updates for patient ID: $patientId');
   locationService.listenLocation(patientId);
+}
+
+@pragma('vm:entry-point')
+Future<void> onNotificationCreatedMethod(
+    ReceivedNotification receivedNotification) async {
+  // Handle notification creation
+}
+
+@pragma('vm:entry-point')
+Future<void> onNotificationDisplayedMethod(
+    ReceivedNotification receivedNotification) async {
+  // Handle notification display
+}
+
+@pragma('vm:entry-point')
+Future<void> onDismissActionReceivedMethod(
+    ReceivedAction receivedAction) async {
+  // Handle notification dismissal and recreate the notification
+  createPersistentNotification();
+}
+
+@pragma('vm:entry-point')
+Future<void> onActionReceivedMethod(ReceivedAction receivedAction) async {
+  // Handle notification action
+}
+
+void createPersistentNotification() {
+  AwesomeNotifications().createNotification(
+    content: NotificationContent(
+      id: 888,
+      channelKey: 'my_foreground',
+      title: 'WanderGuard Service',
+      body: 'Running ${DateTime.now()}',
+      notificationLayout: NotificationLayout.Default,
+      icon: 'resource://drawable/logo_purple',
+      autoDismissible: false,
+    ),
+  );
 }
