@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:wanderguard_patient_app/controllers/auth_controller.dart';
 import 'package:wanderguard_patient_app/screens/call_companion_screen.dart';
+import 'package:wanderguard_patient_app/services/information_service.dart';
 import 'package:wanderguard_patient_app/utils/colors.dart';
 
-class ContactCompanionButton extends StatelessWidget {
+class CallCompanionButton extends StatelessWidget {
   final String text;
 
-  const ContactCompanionButton({super.key, required this.text});
+  const CallCompanionButton({super.key, required this.text});
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +21,8 @@ class ContactCompanionButton extends StatelessWidget {
       ),
       clipBehavior: Clip.hardEdge,
       onPressed: () {
-        context.push(CallCompanionScreen.route);
+        Info.showSnackbarMessage(context,
+            message: "Call Companion Button Pressed", label: "Info");
       },
       child: Text(
         text,

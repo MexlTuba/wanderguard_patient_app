@@ -87,8 +87,6 @@ class AuthController with ChangeNotifier {
       final service = FlutterBackgroundService();
       print('Starting Background Service...');
       await service.startService();
-      await Future.delayed(
-          Duration(seconds: 2)); // Ensure the service is started
       print('Invoking Background setPatientId...');
       service.invoke('setPatientId', {'patientId': userId});
 

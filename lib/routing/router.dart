@@ -2,6 +2,7 @@ import "dart:async";
 import "package:flutter/material.dart";
 import "package:get_it/get_it.dart";
 import "package:go_router/go_router.dart";
+import "package:wanderguard_patient_app/screens/call_companion_screen.dart";
 import "../controllers/auth_controller.dart";
 import "../enum/auth_state.enum.dart";
 import "../screens/auth/login_screen.dart";
@@ -58,6 +59,14 @@ class GlobalRouter {
           name: HomeScreen.name,
           builder: (context, _) {
             return HomeScreen();
+          },
+        ),
+        GoRoute(
+          parentNavigatorKey: _rootNavigatorKey,
+          path: CallCompanionScreen.route,
+          name: CallCompanionScreen.name,
+          builder: (context, _) {
+            return CallCompanionScreen();
           },
         ),
       ],
