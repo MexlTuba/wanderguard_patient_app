@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -10,10 +9,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wanderguard_patient_app/controllers/patient_data_controller.dart';
 import 'package:wanderguard_patient_app/models/patient.model.dart';
 import 'package:wanderguard_patient_app/services/firestore_service.dart';
-import '../enum/account_type.enum.dart';
 import '../enum/auth_state.enum.dart';
-import '../models/companion.model.dart';
-import 'companion_data_controller.dart';
+import '../screens/loading_screen.dart';
+import '../screens/home_screen.dart';
 
 class AuthController with ChangeNotifier {
   final auth.FirebaseAuth _auth = auth.FirebaseAuth.instance;
@@ -44,13 +42,39 @@ class AuthController with ChangeNotifier {
     if (user == null) {
       state = AuthState.unauthenticated;
       await prefs.remove('patientAcctId');
+      notifyListeners();
     } else {
       state = AuthState.authenticated;
       await prefs.setString('patientAcctId', user.uid);
       final service = FlutterBackgroundService();
       service.invoke('setPatientId', {'patientId': user.uid});
+      _loadPatientData(user.uid);
     }
-    notifyListeners();
+  }
+
+  Future<void> _loadPatientData(String userId) async {
+    try {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        print('Loading patient data for user ID: $userId');
+        final Patient? patient =
+            await FirestoreService.instance.getPatient(userId);
+        print('Patient data loaded: ${patient?.firstName}');
+        PatientDataController.instance.setPatient(patient);
+        if (patient != null) {
+          print('Patient data is valid, navigating to home screen...');
+          // Notify listeners to navigate to the home screen
+          state = AuthState.authenticated;
+        } else {
+          print('Patient data is null');
+          state = AuthState.unauthenticated;
+        }
+        notifyListeners();
+      });
+    } catch (e) {
+      print('Error loading patient data: $e');
+      state = AuthState.unauthenticated;
+      notifyListeners();
+    }
   }
 
   Future<void> login(String email, String password) async {
@@ -71,17 +95,8 @@ class AuthController with ChangeNotifier {
       }
 
       print('User ID: ${userId.runtimeType}: $userId');
-
-      final Patient? patient =
-          await FirestoreService.instance.getPatient(userId);
-      print("getPatient Success");
-      print('Patient data: $patient');
-
-      if (patient == null) {
-        throw Exception('Patient data is null');
-      } else {
-        print('HELLO PATIENT');
-      }
+      state = AuthState.authenticated;
+      await _loadPatientData(userId);
 
       // Start the background service and set the patient ID
       final service = FlutterBackgroundService();
@@ -89,12 +104,11 @@ class AuthController with ChangeNotifier {
       await service.startService();
       print('Invoking Background setPatientId...');
       service.invoke('setPatientId', {'patientId': userId});
-
-      print('Setting Patient...');
-      PatientDataController.instance.setPatient(patient);
     } catch (e, stacktrace) {
       print('Error logging in user: $e');
       print('Stacktrace: $stacktrace');
+      state = AuthState.unauthenticated;
+      notifyListeners();
       throw Exception('Failed to log in');
     }
   }

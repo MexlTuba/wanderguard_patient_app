@@ -75,20 +75,6 @@ class LocationService {
     }
   }
 
-  Future<Position?> getLocation() async {
-    print('Getting current location...');
-    try {
-      Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
-      print('Current location: ${position.latitude}, ${position.longitude}');
-      return position;
-    } catch (e) {
-      print('Error getting location: $e');
-      return null;
-    }
-  }
-
   Future<void> listenLocation(String patientId) async {
     print('Entered listenLocation for patientId: $patientId');
     await changeLocationSettings();
@@ -97,7 +83,8 @@ class LocationService {
       print('Setting up location change listener...');
       LocationSettings locationSettings = LocationSettings(
         accuracy: LocationAccuracy.high,
-        distanceFilter: 1, // Adjust this value as needed
+        distanceFilter:
+            1, // VALUE IS IN METERS ADJUST AS NEEDED currently using 1 Meter
       );
 
       positionStream = Geolocator.getPositionStream(

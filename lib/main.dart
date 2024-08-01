@@ -2,7 +2,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:wanderguard_patient_app/controllers/patient_data_controller.dart';
-import 'package:wanderguard_patient_app/models/patient.model.dart';
 import 'package:wanderguard_patient_app/services/background_service.dart';
 import 'controllers/auth_controller.dart';
 import 'controllers/companion_data_controller.dart';
@@ -34,6 +33,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     SizeConfig().init(context);
+
     return Builder(
       builder: (context) {
         return MaterialApp.router(

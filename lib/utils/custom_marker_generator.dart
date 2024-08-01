@@ -2,11 +2,15 @@ import 'dart:async';
 import 'dart:typed_data';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'dart:ui' as ui;
 
-Future<BitmapDescriptor> createCustomMarker(String imageUrl) async {
-  final Uint8List imageData = await _loadImage(imageUrl);
+Future<BitmapDescriptor> createCustomMarker(String imagePath,
+    {bool isNetwork = false}) async {
+  final Uint8List imageData = isNetwork
+      ? await _loadNetworkImage(imagePath)
+      : await _loadAssetImage(imagePath);
 
   final ui.Codec codec = await ui.instantiateImageCodec(imageData,
       targetHeight: 100, targetWidth: 100);
@@ -31,7 +35,7 @@ Future<BitmapDescriptor> createCustomMarker(String imageUrl) async {
   return BitmapDescriptor.fromBytes(byteData!.buffer.asUint8List());
 }
 
-Future<Uint8List> _loadImage(String imageUrl) async {
+Future<Uint8List> _loadNetworkImage(String imageUrl) async {
   final Completer<Uint8List> completer = Completer();
   final ImageStream stream =
       CachedNetworkImageProvider(imageUrl).resolve(const ImageConfiguration());
@@ -43,4 +47,9 @@ Future<Uint8List> _loadImage(String imageUrl) async {
 
   stream.addListener(listener);
   return completer.future;
+}
+
+Future<Uint8List> _loadAssetImage(String assetPath) async {
+  final ByteData byteData = await rootBundle.load(assetPath);
+  return byteData.buffer.asUint8List();
 }

@@ -22,7 +22,7 @@ class MapActionButtons extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         _buildActionButton(Icons.note, onFirstButtonPressed, 50),
-        _buildActionButton(isPolylineVisible ? Icons.close : Icons.home,
+        _buildActionButton(isPolylineVisible ? Icons.clear : Icons.home,
             onSecondButtonPressed, 60),
         _buildActionButton(Icons.medical_services, onThirdButtonPressed, 50),
       ],

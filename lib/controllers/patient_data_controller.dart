@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
-import 'package:wanderguard_patient_app/services/location_service.dart';
 import '../models/patient.model.dart';
 
 class PatientDataController with ChangeNotifier {
@@ -51,7 +50,6 @@ class PatientDataController with ChangeNotifier {
   @override
   void dispose() {
     patientStream?.cancel();
-    // _locationService.stopListening();
     super.dispose();
   }
 }

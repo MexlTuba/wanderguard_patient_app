@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_background_service_android/flutter_background_service_android.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:wanderguard_patient_app/services/location_service.dart';
 
 Future<void> initializeService() async {
@@ -30,7 +29,7 @@ Future<void> initializeService() async {
   await service.configure(
     androidConfiguration: AndroidConfiguration(
       onStart: onStart,
-      autoStart: true, // Ensure this is true for auto-start
+      autoStart: true,
       isForegroundMode: true,
       notificationChannelId: 'my_foreground',
       initialNotificationTitle: 'WanderGuard Service',
@@ -43,15 +42,12 @@ Future<void> initializeService() async {
       onBackground: onIosBackground,
     ),
   );
-
-  // Ensure the service starts on initialization
-  service.startService();
 }
 
 @pragma('vm:entry-point')
 Future<bool> onIosBackground(ServiceInstance service) async {
   WidgetsFlutterBinding.ensureInitialized();
-  // DartPluginRegistrant.ensureInitialized();
+  DartPluginRegistrant.ensureInitialized();
 
   return true;
 }
@@ -60,7 +56,7 @@ Future<bool> onIosBackground(ServiceInstance service) async {
 void onStart(ServiceInstance service) async {
   print('Entered onStart');
   WidgetsFlutterBinding.ensureInitialized();
-  // DartPluginRegistrant.ensureInitialized();
+  DartPluginRegistrant.ensureInitialized();
 
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();

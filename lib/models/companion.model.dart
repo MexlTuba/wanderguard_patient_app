@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-
 import '../enum/account_type.enum.dart';
 
 class Companion {
@@ -28,11 +27,6 @@ class Companion {
     required this.updatedAt,
     required this.currentLocation,
   });
-
-  // Method to update the current location
-  void updateCurrentLocation(GeoPoint newLocation) {
-    currentLocation = newLocation;
-  }
 
   // Convert Companion to Firestore document
   Map<String, dynamic> toFirestore() {

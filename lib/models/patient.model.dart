@@ -1,8 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:wanderguard_patient_app/enum/account_status.enum.dart';
-
 import 'package:wanderguard_patient_app/enum/account_type.enum.dart';
-
 import 'geofence.model.dart';
 import 'emergency_contact.model.dart';
 
@@ -48,10 +46,6 @@ class Patient {
     required this.updatedAt,
     required this.companionAcctId,
   });
-  // void updateLastLocTracked(GeoPoint newLocation) {
-  //   lastLocTracked = newLocation;
-  //   lastLocUpdated = DateTime.now();
-  // }
 
   // Convert Patient to Firestore document
   Map<String, dynamic> toFirestore() {
