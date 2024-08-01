@@ -2,7 +2,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:form_field_validator/form_field_validator.dart';
-import 'package:go_router/go_router.dart';
 import '../../controllers/auth_controller.dart';
 import '../../utils/colors.dart';
 import '../../utils/size_config.dart';
@@ -51,19 +50,6 @@ class _LoginScreenState extends State<LoginScreen> {
       appBar: AppBar(
         elevation: 0,
         automaticallyImplyLeading: false,
-        leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios_rounded,
-            size: 20,
-          ),
-          onPressed: () {
-            if (GoRouter.of(context).canPop()) {
-              context.pop();
-            } else {
-              // context.go(OnBoardingScreen.route);
-            }
-          },
-        ),
         backgroundColor: CustomColors.secondaryColor,
         surfaceTintColor: CustomColors.secondaryColor,
       ),

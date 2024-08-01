@@ -15,8 +15,7 @@ class ContactCompanionButton extends StatelessWidget {
       style: ElevatedButton.styleFrom(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         backgroundColor: CustomColors.primaryColor,
-        minimumSize: Size(
-            MediaQuery.of(context).size.width, 60), // Increase the height to 60
+        minimumSize: Size(MediaQuery.of(context).size.width, 60),
       ),
       clipBehavior: Clip.hardEdge,
       onPressed: () {

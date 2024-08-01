@@ -1,26 +1,28 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wanderguard_patient_app/controllers/patient_data_controller.dart';
-import 'package:wanderguard_patient_app/models/patient.model.dart';
 import 'package:wanderguard_patient_app/models/companion.model.dart';
 import 'package:wanderguard_patient_app/services/location_service.dart';
 import 'package:wanderguard_patient_app/utils/colors.dart';
 import 'package:wanderguard_patient_app/widgets/map_action_buttons.dart';
 import 'package:wanderguard_patient_app/widgets/my_companion_card.dart';
-import 'package:flutter_polyline_points/flutter_polyline_points.dart';
-import '../controllers/auth_controller.dart';
-import '../services/information_service.dart';
-import '../widgets/contact_companion_button.dart';
-import '../widgets/dialogs/waiting_dialog.dart';
-import '../controllers/companion_data_controller.dart';
-import '../services/firestore_service.dart';
+import 'package:wanderguard_patient_app/widgets/contact_companion_button.dart';
+import 'package:wanderguard_patient_app/widgets/dialogs/waiting_dialog.dart';
+import 'package:wanderguard_patient_app/controllers/auth_controller.dart';
+import 'package:wanderguard_patient_app/services/firestore_service.dart';
+import 'package:wanderguard_patient_app/services/information_service.dart';
+import '../models/geofence.model.dart';
+import '../models/patient.model.dart';
+import '../utils/custom_marker_generator.dart';
+import '../utils/location_utils.dart';
+import '../utils/dialog_utils.dart';
+import '../utils/polyline_utils.dart';
+import '../utils/geofence_utils.dart';
 
 class HomeScreen extends StatefulWidget {
   static const route = '/home';
@@ -29,10 +31,10 @@ class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  _HomeScreenState createState() => _HomeScreenState();
+  HomeScreenState createState() => HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class HomeScreenState extends State<HomeScreen> {
   late CameraPosition _initialPosition = const CameraPosition(
     target: LatLng(0, 0),
     zoom: 2,
@@ -45,7 +47,9 @@ class _HomeScreenState extends State<HomeScreen> {
   final LocationService _locationService = LocationService();
   Companion? _companion;
   List<LatLng> _polylineCoordinates = [];
-  PolylinePoints polylinePoints = PolylinePoints();
+  Set<Circle> _circles = {};
+  Set<Marker> _markers = {};
+  final PolylineUtils _polylineUtils = PolylineUtils();
 
   @override
   void initState() {
@@ -70,7 +74,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _initializeLocation() async {
     try {
       print('Initializing location...');
-      _determinePosition().then((position) {
+      determinePosition().then((position) {
         setState(() {
           _currentPosition = position;
           _initialPosition = CameraPosition(
@@ -87,6 +91,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 'Starting to listen to location updates for patient ID: ${patient.patientAcctId}');
             _locationService.listenLocation(patient.patientAcctId);
             print("Now Tracking Live Location");
+            // Draw geofences
+            _drawGeofences(patient);
+            // Add home marker
+            _addHomeMarker(patient);
           } else {
             print('No patient found in PatientDataController');
           }
@@ -154,76 +162,51 @@ class _HomeScreenState extends State<HomeScreen> {
         _polylineVisible = false;
       });
     } else {
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (BuildContext context) {
-          return Dialog(
-            backgroundColor: Colors.white,
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SpinKitRipple(
-                    color: CustomColors.primaryColor,
-                    size: 60,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    "Locating Home...",
-                    style: TextStyle(color: CustomColors.primaryColor),
-                  ),
-                ],
-              ),
-            ),
-          );
+      showLoadingDialog(context, message: "Locating Home...");
+      await _polylineUtils.drawPolylineToHome(
+        currentPosition: _currentPosition,
+        onPolylineGenerated: (polylineCoordinates) {
+          setState(() {
+            _polylineCoordinates = polylineCoordinates;
+            _polylineVisible = true;
+          });
         },
       );
-      await _drawPolylineToHome();
-      Navigator.of(context).pop();
+      hideLoadingDialog(context);
+    }
+  }
+
+  void _drawGeofences(Patient patient) {
+    drawGeofence(this, patient.defaultGeofence);
+    for (Geofence geofence in patient.geofences) {
+      drawGeofence(this, geofence);
+    }
+  }
+
+  void _addHomeMarker(Patient patient) async {
+    List<Location> locations = await locationFromAddress(patient.homeAddress);
+    if (locations.isNotEmpty) {
+      Location homeLocation = locations.first;
+      BitmapDescriptor homeIcon = await createCustomMarker(
+          'lib/assets/images/home-icon.png',
+          isNetwork: false);
+      final Marker homeMarker = Marker(
+        markerId: MarkerId('home_marker'),
+        position: LatLng(homeLocation.latitude, homeLocation.longitude),
+        icon: homeIcon,
+        infoWindow: InfoWindow(title: 'Home'),
+      );
+
       setState(() {
-        _polylineVisible = true;
+        _markers.add(homeMarker);
       });
     }
   }
 
-  Future<void> _drawPolylineToHome() async {
-    Patient? patient =
-        PatientDataController.instance.patientModelNotifier.value;
-    if (patient != null) {
-      List<Location> locations = await locationFromAddress(patient.homeAddress);
-      if (locations.isNotEmpty) {
-        Location homeLocation = locations.first;
-        PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
-          googleApiKey: 'AIzaSyDOlsE9ugND1vY-T9oR91QyR86Sk_DrksY',
-          request: PolylineRequest(
-            origin: PointLatLng(
-                _currentPosition.latitude, _currentPosition.longitude),
-            destination:
-                PointLatLng(homeLocation.latitude, homeLocation.longitude),
-            mode: TravelMode.driving,
-          ),
-        );
-        if (result.points.isNotEmpty) {
-          setState(() {
-            _polylineCoordinates.clear();
-            result.points.forEach((PointLatLng point) {
-              _polylineCoordinates.add(LatLng(point.latitude, point.longitude));
-            });
-          });
-        } else {
-          print('Error: ${result.errorMessage}');
-        }
-      }
-    }
-  }
-
-  Future<Position> _determinePosition() async {
-    print('Determining position...');
-    return await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high,
-    );
+  void addCircle(Circle circle) {
+    setState(() {
+      _circles.add(circle);
+    });
   }
 
   @override
@@ -256,6 +239,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         points: _polylineCoordinates,
                       ),
                     },
+                    circles: _circles,
+                    markers: _markers,
                     padding: EdgeInsets.only(bottom: 250),
                     onMapCreated: (GoogleMapController controller) {
                       _controller = controller;
@@ -303,8 +288,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       '${_companion!.firstName} ${_companion!.lastName}',
                                   phoneNumber: _companion!.contactNo,
                                   address: _companion!.address,
-                                  relationship:
-                                      'Companion', // Update this if you have the relationship data
+                                  relationship: 'Companion',
                                   imageUrl: _companion!.photoUrl,
                                 )
                               : Text('No companion data available'),

@@ -1,12 +1,13 @@
-import "dart:async";
-import "package:flutter/material.dart";
-import "package:get_it/get_it.dart";
-import "package:go_router/go_router.dart";
-import "package:wanderguard_patient_app/screens/call_companion_screen.dart";
-import "../controllers/auth_controller.dart";
-import "../enum/auth_state.enum.dart";
-import "../screens/auth/login_screen.dart";
-import "../screens/home_screen.dart";
+import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
+import 'package:go_router/go_router.dart';
+import 'package:wanderguard_patient_app/screens/call_companion_screen.dart';
+import '../controllers/auth_controller.dart';
+import '../enum/auth_state.enum.dart';
+import '../screens/auth/login_screen.dart';
+import '../screens/home_screen.dart';
+import '../screens/loading_screen.dart';
 
 class GlobalRouter {
   static void initialize() {
@@ -23,6 +24,10 @@ class GlobalRouter {
       BuildContext context, GoRouterState state) async {
     if (AuthController.instance.state == AuthState.authenticated) {
       if (state.matchedLocation == LoginScreen.route) {
+        return LoadingScreen.route;
+      }
+      if (state.matchedLocation == LoadingScreen.route &&
+          AuthController.instance.state == AuthState.authenticated) {
         return HomeScreen.route;
       }
       return null;
@@ -58,7 +63,7 @@ class GlobalRouter {
           path: HomeScreen.route,
           name: HomeScreen.name,
           builder: (context, _) {
-            return HomeScreen();
+            return const HomeScreen();
           },
         ),
         GoRoute(
@@ -66,7 +71,15 @@ class GlobalRouter {
           path: CallCompanionScreen.route,
           name: CallCompanionScreen.name,
           builder: (context, _) {
-            return CallCompanionScreen();
+            return const CallCompanionScreen();
+          },
+        ),
+        GoRoute(
+          parentNavigatorKey: _rootNavigatorKey,
+          path: LoadingScreen.route,
+          name: LoadingScreen.name,
+          builder: (context, _) {
+            return const LoadingScreen();
           },
         ),
       ],
