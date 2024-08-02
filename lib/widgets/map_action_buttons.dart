@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:wanderguard_patient_app/utils/colors.dart';
 
 class MapActionButtons extends StatelessWidget {
@@ -21,29 +22,36 @@ class MapActionButtons extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        _buildActionButton(Icons.note, onFirstButtonPressed, 50),
-        _buildActionButton(isPolylineVisible ? Icons.clear : Icons.home,
-            onSecondButtonPressed, 60),
-        _buildActionButton(Icons.medical_services, onThirdButtonPressed, 50),
+        _buildActionButton(
+            'lib/assets/icons/reminders.svg', onFirstButtonPressed, 60, 16),
+        _buildActionButton(
+            isPolylineVisible
+                ? 'lib/assets/icons/close.svg'
+                : 'lib/assets/icons/locate-home.svg',
+            onSecondButtonPressed,
+            80,
+            20),
+        _buildActionButton(
+            'lib/assets/icons/medicine.svg', onThirdButtonPressed, 60, 14),
       ],
     );
   }
 
   Widget _buildActionButton(
-      IconData icon, VoidCallback onPressed, double size) {
+      String iconPath, VoidCallback onPressed, double size, double padding) {
     return GestureDetector(
       onTap: onPressed,
       child: Container(
         width: size,
         height: size,
+        padding: EdgeInsets.all(padding),
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: CustomColors.primaryColor,
         ),
-        child: Icon(
-          icon,
-          color: Colors.white,
-          size: size / 2,
+        child: SvgPicture.asset(
+          iconPath,
+          fit: BoxFit.contain,
         ),
       ),
     );

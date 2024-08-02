@@ -2,12 +2,14 @@ import 'dart:async';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:awesome_notifications/awesome_notifications.dart';
 import '../models/patient.model.dart';
 
 class LocationService {
   StreamSubscription<Position>? positionStream;
+  Function(bool)? onGeofenceStatusChanged;
 
-  LocationService() {
+  LocationService({this.onGeofenceStatusChanged}) {
     print('LocationService initialized');
   }
 
@@ -77,28 +79,21 @@ class LocationService {
   }
 
   Future<void> listenLocation(String patientId) async {
-    print('Entered listenLocation for patientId: $patientId');
     await changeLocationSettings();
 
     try {
-      print('Setting up location change listener...');
       LocationSettings locationSettings = LocationSettings(
         accuracy: LocationAccuracy.high,
-        distanceFilter:
-            1, // VALUE IS IN METERS ADJUST AS NEEDED currently using 1 Meter
+        distanceFilter: 1,
       );
 
       positionStream = Geolocator.getPositionStream(
         locationSettings: locationSettings,
       ).listen(
         (Position position) async {
-          print(
-              'Location changed: ${position.latitude}, ${position.longitude}');
-
           GeoPoint newLocation =
               GeoPoint(position.latitude, position.longitude);
 
-          // Retrieve the patient's document from Firestore
           DocumentSnapshot patientSnapshot = await FirebaseFirestore.instance
               .collection('patients')
               .doc(patientId)
@@ -108,7 +103,6 @@ class LocationService {
             Patient patient = Patient.fromFirestore(
                 patientSnapshot as DocumentSnapshot<Map<String, dynamic>>);
 
-            // Check if the patient is within the default geofence
             bool isWithinGeofence =
                 patient.defaultGeofence.isWithinGeofence(newLocation);
 
@@ -121,8 +115,33 @@ class LocationService {
               'isWithinGeofence': isWithinGeofence,
             });
 
+            if (onGeofenceStatusChanged != null) {
+              onGeofenceStatusChanged!(isWithinGeofence);
+            }
+
             print(
                 "Updated Firestore with new location: $newLocation and geofence status: $isWithinGeofence");
+
+            if (!isWithinGeofence) {
+              // Trigger the notification with vibration
+              AwesomeNotifications().createNotification(
+                content: NotificationContent(
+                  id: 999,
+                  channelKey: 'geofence_alerts',
+                  title: 'Alert',
+                  body: 'Left safe zone, please return now',
+                  notificationLayout: NotificationLayout.Default,
+                  autoDismissible: false,
+                ),
+                actionButtons: [
+                  NotificationActionButton(
+                    key: 'DISMISS',
+                    label: 'Dismiss',
+                    actionType: ActionType.DismissAction,
+                  ),
+                ],
+              );
+            }
           }
         },
         onError: (e) {

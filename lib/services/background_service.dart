@@ -26,6 +26,19 @@ Future<void> initializeService() async {
         importance: NotificationImportance.Low,
         locked: true,
       ),
+      NotificationChannel(
+        channelGroupKey: 'geofence_alert_group',
+        channelKey: 'geofence_alerts',
+        channelName: 'Geofence Alerts',
+        channelDescription:
+            'This channel is used for geofence alert notifications.',
+        defaultColor: CustomColors.primaryColor,
+        ledColor: Colors.white,
+        vibrationPattern: highVibrationPattern,
+        importance: NotificationImportance.High,
+        playSound: true,
+        enableVibration: true,
+      ),
     ],
     debug: true,
   );
@@ -66,6 +79,8 @@ Future<bool> onIosBackground(ServiceInstance service) async {
 @pragma('vm:entry-point')
 Future<void> onStart(ServiceInstance service) async {
   print('Entered onStart');
+  createPersistentNotification();
+  print('Persistent notification created');
   WidgetsFlutterBinding.ensureInitialized();
   DartPluginRegistrant.ensureInitialized();
 
@@ -124,8 +139,16 @@ Future<void> onNotificationDisplayedMethod(
 @pragma('vm:entry-point')
 Future<void> onDismissActionReceivedMethod(
     ReceivedAction receivedAction) async {
-  // Handle notification dismissal and recreate the notification
-  createPersistentNotification();
+  // Handle notification dismissal
+  if (receivedAction.id == 999) {
+    // This was the geofence alert notification
+    print('Geofence alert notification dismissed');
+  }
+  if (receivedAction.id == 888) {
+    // This was the persistent notification
+    print('Persistent notification dismissed');
+    createPersistentNotification();
+  }
 }
 
 @pragma('vm:entry-point')

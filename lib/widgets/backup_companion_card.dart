@@ -17,6 +17,7 @@ class BackupCompanionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
+      color: Colors.white,
       margin: EdgeInsets.only(bottom: 16),
       child: ListTile(
         contentPadding: EdgeInsets.all(8),

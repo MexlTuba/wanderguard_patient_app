@@ -24,6 +24,7 @@ import '../utils/location_utils.dart';
 import '../utils/dialog_utils.dart';
 import '../utils/polyline_utils.dart';
 import '../utils/geofence_utils.dart';
+import '../widgets/persistent_banner.dart';
 
 class HomeScreen extends StatefulWidget {
   static const route = '/home';
@@ -51,13 +52,48 @@ class HomeScreenState extends State<HomeScreen> {
   Set<Circle> _circles = {};
   Set<Marker> _markers = {};
   final PolylineUtils _polylineUtils = PolylineUtils();
+  OverlayEntry? _persistentBannerEntry;
 
   @override
   void initState() {
     super.initState();
+    _locationService.onGeofenceStatusChanged = _onGeofenceStatusChanged;
     _initializeLocation();
     _triggerLocationTracking();
     _fetchCompanionDetails();
+  }
+
+  void _onGeofenceStatusChanged(bool isWithinGeofence) {
+    if (!isWithinGeofence) {
+      _showPersistentBanner('Left safe zone, please return NOW');
+    } else {
+      _hidePersistentBanner();
+    }
+  }
+
+  void _showPersistentBanner(String message) {
+    if (_persistentBannerEntry != null) {
+      return; // Banner is already showing
+    }
+
+    _persistentBannerEntry = OverlayEntry(
+      builder: (context) => Positioned(
+        top: 100,
+        left: 0,
+        right: 0,
+        child: PersistentBanner(
+          message: message,
+          onClose: _hidePersistentBanner,
+        ),
+      ),
+    );
+
+    Overlay.of(context).insert(_persistentBannerEntry!);
+  }
+
+  void _hidePersistentBanner() {
+    _persistentBannerEntry?.remove();
+    _persistentBannerEntry = null;
   }
 
   Future<void> _triggerLocationTracking() async {
@@ -240,6 +276,7 @@ class HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     _locationService.stopListening();
+    _hidePersistentBanner();
     super.dispose();
   }
 
@@ -284,7 +321,7 @@ class HomeScreenState extends State<HomeScreen> {
                     },
                   ),
                   Positioned(
-                    bottom: 16.0,
+                    bottom: 12.0,
                     left: 16.0,
                     right: 16.0,
                     child: ContactCompanionButton(text: 'Contact Companion'),

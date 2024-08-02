@@ -67,18 +67,17 @@ class _CallCompanionScreenState extends State<CallCompanionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
       body: SafeArea(
         child: _loadingCompanion
             ? WaitingDialog(
                 prompt: "Loading...", color: CustomColors.primaryColor)
             : Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
                 child: Column(
                   children: [
                     SizedBox(height: 50), // Space for status bar
                     CircleAvatar(
-                      radius: 50,
+                      radius: 100,
                       backgroundImage: NetworkImage(
                         _companion?.photoUrl ?? '',
                       ),
@@ -93,22 +92,24 @@ class _CallCompanionScreenState extends State<CallCompanionScreen> {
                       ),
                     ),
                     Text(
-                      'companion',
+                      'Companion',
                       style: TextStyle(
                         fontSize: 16,
                         color: Colors.grey,
                       ),
                     ),
                     SizedBox(height: 24),
-                    Text(
-                      'Backup Companions',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
+                    Row(
+                      children: [
+                        Text(
+                          'Backup Companions',
+                          style: TextStyle(
+                            fontSize: 18,
+                          ),
+                        ),
+                      ],
                     ),
-                    SizedBox(height: 16),
+                    SizedBox(height: 4),
                     Expanded(
                       child: ListView(
                         children: [
@@ -131,7 +132,6 @@ class _CallCompanionScreenState extends State<CallCompanionScreen> {
                         ],
                       ),
                     ),
-                    SizedBox(height: 16),
                     CallCompanionButton(text: 'Call Companion'),
                   ],
                 ),

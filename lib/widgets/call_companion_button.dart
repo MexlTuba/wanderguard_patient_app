@@ -20,9 +20,16 @@ class CallCompanionButton extends StatelessWidget {
         Info.showSnackbarMessage(context,
             message: "Call Companion Button Pressed", label: "Info");
       },
-      child: Text(
-        text,
-        style: const TextStyle(fontSize: 18, color: Colors.white),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            text,
+            style: const TextStyle(fontSize: 18, color: Colors.white),
+          ),
+          SizedBox(width: 8),
+          Icon(Icons.phone, color: Colors.white),
+        ],
       ),
     );
   }

@@ -13,14 +13,14 @@ Future<BitmapDescriptor> createCustomMarker(String imagePath,
       : await _loadAssetImage(imagePath);
 
   final ui.Codec codec = await ui.instantiateImageCodec(imageData,
-      targetHeight: 100, targetWidth: 100);
+      targetHeight: 125, targetWidth: 125);
   final ui.FrameInfo frameInfo = await codec.getNextFrame();
   final ui.Image image = frameInfo.image;
 
   final ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
   final Canvas canvas = Canvas(pictureRecorder);
   final Paint paint = Paint()..isAntiAlias = true;
-  const double size = 100.0;
+  const double size = 125.0;
 
   canvas.drawCircle(
       const Offset(size / 2, size / 2), size / 2, paint..color = Colors.white);
