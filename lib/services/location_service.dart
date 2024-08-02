@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../models/patient.model.dart';
 
 class LocationService {
   StreamSubscription<Position>? positionStream;
@@ -96,14 +97,33 @@ class LocationService {
 
           GeoPoint newLocation =
               GeoPoint(position.latitude, position.longitude);
-          await FirebaseFirestore.instance
+
+          // Retrieve the patient's document from Firestore
+          DocumentSnapshot patientSnapshot = await FirebaseFirestore.instance
               .collection('patients')
               .doc(patientId)
-              .update({
-            'lastLocTracked': newLocation,
-            'lastLocUpdated': Timestamp.now(),
-          });
-          print("Updated Firestore with new location: $newLocation");
+              .get();
+
+          if (patientSnapshot.exists) {
+            Patient patient = Patient.fromFirestore(
+                patientSnapshot as DocumentSnapshot<Map<String, dynamic>>);
+
+            // Check if the patient is within the default geofence
+            bool isWithinGeofence =
+                patient.defaultGeofence.isWithinGeofence(newLocation);
+
+            await FirebaseFirestore.instance
+                .collection('patients')
+                .doc(patientId)
+                .update({
+              'lastLocTracked': newLocation,
+              'lastLocUpdated': Timestamp.now(),
+              'isWithinGeofence': isWithinGeofence,
+            });
+
+            print(
+                "Updated Firestore with new location: $newLocation and geofence status: $isWithinGeofence");
+          }
         },
         onError: (e) {
           print('Error listening to location changes: $e');

@@ -1,9 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get_it/get_it.dart';
-
-import '../enum/account_status.enum.dart';
-import '../enum/account_type.enum.dart';
 import '../models/companion.model.dart';
 import '../models/patient.model.dart';
 
@@ -61,50 +58,5 @@ class FirestoreService {
       print("ERROR: Patient not found!");
     }
     return null;
-  }
-
-  Future<void> addPatient(Patient patient) async {
-    final User? companionUser = _auth.currentUser;
-    if (companionUser != null) {
-      try {
-        UserCredential userCredential =
-            await _auth.createUserWithEmailAndPassword(
-          email: patient.email,
-          password: patient.password,
-        );
-
-        String patientUid = userCredential.user!.uid;
-
-        final Patient newPatient = Patient(
-          patientAcctId: patientUid,
-          firstName: patient.firstName,
-          lastName: patient.lastName,
-          email: patient.email,
-          password: patient.password,
-          homeAddress: patient.homeAddress,
-          contactNo: patient.contactNo,
-          dateOfBirth: patient.dateOfBirth,
-          photoUrl: '',
-          acctType: AccountType.patient,
-          acctStatus: AccountStatus.offline,
-          lastLocTracked: GeoPoint(0, 0),
-          lastLocUpdated: DateTime.now(),
-          defaultGeofence: patient.defaultGeofence,
-          geofences: patient.geofences,
-          emergencyContacts: patient.emergencyContacts,
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-          companionAcctId: companionUser.uid,
-        );
-
-        final DocumentReference docRef =
-            _db.collection('patients').doc(patientUid);
-        await docRef.set(newPatient.toFirestore());
-      } catch (e) {
-        throw Exception("Error registering patient: $e");
-      }
-    } else {
-      throw Exception("No user is currently logged in.");
-    }
   }
 }

@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:wanderguard_patient_app/enum/account_status.enum.dart';
-import 'package:wanderguard_patient_app/enum/account_type.enum.dart';
+import '../enum/account_status.enum.dart';
+import '../enum/account_type.enum.dart';
 import 'geofence.model.dart';
 import 'emergency_contact.model.dart';
 
@@ -16,11 +16,12 @@ class Patient {
   final String photoUrl;
   final AccountType acctType;
   final AccountStatus acctStatus;
-  GeoPoint lastLocTracked;
-  DateTime lastLocUpdated;
+  final GeoPoint lastLocTracked;
+  final DateTime lastLocUpdated;
   final Geofence defaultGeofence;
   final List<Geofence> geofences;
   final List<EmergencyContact> emergencyContacts;
+  final bool isWithinGeofence;
   final DateTime createdAt;
   final DateTime updatedAt;
   final String companionAcctId;
@@ -42,6 +43,7 @@ class Patient {
     required this.defaultGeofence,
     required this.geofences,
     required this.emergencyContacts,
+    required this.isWithinGeofence,
     required this.createdAt,
     required this.updatedAt,
     required this.companionAcctId,
@@ -67,6 +69,7 @@ class Patient {
       'geofences': geofences.map((geofence) => geofence.toFirestore()).toList(),
       'emergencyContacts':
           emergencyContacts.map((contact) => contact.toFirestore()).toList(),
+      'isWithinGeofence': isWithinGeofence,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
       'companionAcctId': companionAcctId,
@@ -96,9 +99,14 @@ class Patient {
       emergencyContacts: (data['emergencyContacts'] as List)
           .map((contactData) => EmergencyContact.fromFirestore(contactData))
           .toList(),
+      isWithinGeofence: data['isWithinGeofence'],
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       updatedAt: (data['updatedAt'] as Timestamp).toDate(),
       companionAcctId: data['companionAcctId'],
     );
+  }
+
+  bool checkIfWithinGeofence() {
+    return defaultGeofence.isWithinGeofence(lastLocTracked);
   }
 }
