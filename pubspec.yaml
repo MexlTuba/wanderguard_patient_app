@@ -1,10 +1,10 @@
 name: wanderguard_patient_app
 description: "A new Flutter project."
-publish_to: 'none'
+publish_to: "none"
 version: 0.1.0
 
 environment:
-  sdk: '>=3.4.3 <4.0.0'
+  sdk: ">=3.4.3 <4.0.0"
 
 dependencies:
   android_intent_plus: ^5.1.0
@@ -32,7 +32,11 @@ dependencies:
   google_sign_in: ^6.2.1
   location: ^7.0.0
   permission_handler: ^11.3.1
+  provider: ^6.1.2
   shared_preferences: ^2.2.3
+  zego_uikit: ^2.26.1
+  zego_uikit_prebuilt_call: ^4.14.3
+  zego_uikit_signaling_plugin: ^2.8.2
 
 dev_dependencies:
   flutter_test:
@@ -46,4 +50,3 @@ flutter:
     - lib/assets/images/
     - lib/assets/icons/
     - lib/assets/local_json/
-

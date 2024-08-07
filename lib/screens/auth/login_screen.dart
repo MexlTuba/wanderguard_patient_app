@@ -2,10 +2,16 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:form_field_validator/form_field_validator.dart';
-import '../../controllers/auth_controller.dart';
-import '../../utils/colors.dart';
-import '../../utils/size_config.dart';
-import '../../widgets/dialogs/waiting_dialog.dart';
+import 'package:go_router/go_router.dart';
+import 'package:wanderguard_patient_app/controllers/auth_controller.dart';
+import 'package:wanderguard_patient_app/controllers/patient_data_controller.dart';
+import 'package:wanderguard_patient_app/main.dart';
+import 'package:wanderguard_patient_app/routing/router.dart';
+import 'package:wanderguard_patient_app/services/zegocloud_service.dart';
+import 'package:wanderguard_patient_app/utils/colors.dart';
+import 'package:wanderguard_patient_app/utils/size_config.dart';
+import 'package:wanderguard_patient_app/widgets/dialogs/waiting_dialog.dart';
+import 'package:wanderguard_patient_app/screens/home_screen.dart'; // Import your ZegoServiceHelper
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -36,11 +42,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   void dispose() {
-    super.dispose();
     username.dispose();
     password.dispose();
     usernameFn.dispose();
     passwordFn.dispose();
+    super.dispose();
   }
 
   @override
@@ -227,11 +233,47 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  onSubmit() {
+  Future<void> onSubmit() async {
     if (formKey.currentState?.validate() ?? false) {
-      WaitingDialog.show(context,
-          future: AuthController.instance
-              .login(username.text.trim(), password.text.trim()));
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return WaitingDialog(prompt: 'Logging in...');
+        },
+      );
+
+      try {
+        await AuthController.instance.login(
+          username.text.trim(),
+          password.text.trim(),
+        );
+
+        final patient =
+            PatientDataController.instance.patientModelNotifier.value;
+        if (patient != null) {
+          ZegoServiceHelper zegoServiceHelper = ZegoServiceHelper(
+            patientAcctId: patient.patientAcctId,
+            patientName: '${patient.firstName} ${patient.lastName}',
+            navigatorKey: GlobalRouter.navigatorKey,
+          );
+          zegoServiceHelper.initialize();
+
+          if (mounted) {
+            Navigator.of(context).pop(); // Close the WaitingDialog
+            context.go(HomeScreen.route);
+          }
+        } else {
+          throw Exception('Patient data not found');
+        }
+      } catch (e) {
+        if (mounted) {
+          Navigator.of(context).pop(); // Close the WaitingDialog
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Login failed: $e')),
+          );
+        }
+      }
     }
   }
 
@@ -250,7 +292,7 @@ class _LoginScreenState extends State<LoginScreen> {
         borderSide: BorderSide(color: Colors.grey.shade400, width: 1),
       ),
       focusedBorder: _baseBorder.copyWith(
-        borderSide: const BorderSide(color: Colors.deepPurpleAccent, width: 1),
+        borderSide: BorderSide(color: Colors.deepPurpleAccent, width: 1),
       ),
       errorBorder: _baseBorder.copyWith(
         borderSide: const BorderSide(color: Colors.redAccent, width: 1),

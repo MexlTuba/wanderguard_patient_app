@@ -1,35 +1,40 @@
+// call_patient_button.dart
 import 'package:flutter/material.dart';
-import 'package:wanderguard_patient_app/services/information_service.dart';
-import 'package:wanderguard_patient_app/utils/colors.dart';
+import 'package:zego_uikit/zego_uikit.dart';
+import 'package:zego_uikit_prebuilt_call/zego_uikit_prebuilt_call.dart';
+
+enum CallType { voiceCall, videoCall }
 
 class CallCompanionButton extends StatelessWidget {
-  final String text;
+  final String companionAcctId;
+  final String companionName;
+  final CallType callType;
+  final double opacity;
 
-  const CallCompanionButton({super.key, required this.text});
+  const CallCompanionButton({
+    super.key,
+    required this.companionAcctId,
+    required this.companionName,
+    this.callType = CallType.videoCall,
+    this.opacity = 1.0,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return ElevatedButton(
-      style: ElevatedButton.styleFrom(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        backgroundColor: CustomColors.primaryColor,
-        minimumSize: Size(MediaQuery.of(context).size.width, 60),
-      ),
-      clipBehavior: Clip.hardEdge,
-      onPressed: () {
-        Info.showSnackbarMessage(context,
-            message: "Call Companion Button Pressed", label: "Info");
-      },
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            text,
-            style: const TextStyle(fontSize: 18, color: Colors.white),
-          ),
-          SizedBox(width: 8),
-          Icon(Icons.phone, color: Colors.white),
+    return Opacity(
+      opacity: opacity,
+      child: ZegoSendCallInvitationButton(
+        isVideoCall: callType == CallType.videoCall,
+        invitees: [
+          ZegoUIKitUser(id: companionAcctId, name: companionName),
         ],
+        resourceID: 'wanderguard',
+        iconSize: const Size(40, 40), // Default icon size
+        buttonSize: const Size(50, 50), // Default button size
+        onPressed:
+            (String inviterID, String inviterName, List<String> invitees) {
+          debugPrint('SendCallButton pressed for patient: $companionAcctId');
+        },
       ),
     );
   }

@@ -1,88 +1,83 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
+import 'package:wanderguard_patient_app/screens/auth/login_screen.dart';
 import 'package:wanderguard_patient_app/screens/call_companion_screen.dart';
+import 'package:wanderguard_patient_app/screens/home_screen.dart';
+import 'package:wanderguard_patient_app/screens/loading_screen.dart';
+import 'package:wanderguard_patient_app/services/zegocloud_service.dart'; // Import Zego service
 import '../controllers/auth_controller.dart';
+import '../controllers/patient_data_controller.dart';
 import '../enum/auth_state.enum.dart';
-import '../screens/auth/login_screen.dart';
-import '../screens/home_screen.dart';
-import '../screens/loading_screen.dart';
 
 class GlobalRouter {
-  static void initialize() {
-    GetIt.instance.registerSingleton<GlobalRouter>(GlobalRouter());
-  }
-
-  static GlobalRouter get I => GetIt.instance<GlobalRouter>();
-
-  late GoRouter router;
-  late GlobalKey<NavigatorState> _rootNavigatorKey;
-  late GlobalKey<NavigatorState> _shellNavigatorKey;
-
-  FutureOr<String?> handleRedirect(
-      BuildContext context, GoRouterState state) async {
-    if (AuthController.instance.state == AuthState.authenticated) {
-      if (state.matchedLocation == LoginScreen.route) {
-        return LoadingScreen.route;
-      }
-      if (state.matchedLocation == LoadingScreen.route &&
-          AuthController.instance.state == AuthState.authenticated) {
-        return HomeScreen.route;
-      }
-      return null;
-    }
-    if (AuthController.instance.state != AuthState.authenticated) {
-      if (state.matchedLocation == LoginScreen.route) {
-        return null;
-      }
-      return LoginScreen.route;
-    }
-    return null;
-  }
+  late final GoRouter router;
+  static final GlobalKey<NavigatorState> navigatorKey =
+      GlobalKey<NavigatorState>();
 
   GlobalRouter() {
-    _rootNavigatorKey = GlobalKey<NavigatorState>();
-    _shellNavigatorKey = GlobalKey<NavigatorState>();
     router = GoRouter(
-      navigatorKey: _rootNavigatorKey,
+      navigatorKey: navigatorKey,
       initialLocation: LoginScreen.route,
       redirect: handleRedirect,
       refreshListenable: AuthController.instance,
       routes: [
         GoRoute(
-          parentNavigatorKey: _rootNavigatorKey,
           path: LoginScreen.route,
           name: LoginScreen.name,
-          builder: (context, _) {
-            return const LoginScreen();
-          },
+          builder: (context, state) => const LoginScreen(),
         ),
         GoRoute(
-          parentNavigatorKey: _rootNavigatorKey,
           path: HomeScreen.route,
           name: HomeScreen.name,
-          builder: (context, _) {
+          builder: (context, state) {
+            final patient =
+                PatientDataController.instance.patientModelNotifier.value;
+            if (patient != null) {
+              ZegoServiceHelper zegoServiceHelper = ZegoServiceHelper(
+                patientAcctId: patient.patientAcctId,
+                patientName: '${patient.firstName} ${patient.lastName}',
+                navigatorKey: navigatorKey,
+              );
+              zegoServiceHelper.initialize();
+            }
             return const HomeScreen();
           },
         ),
         GoRoute(
-          parentNavigatorKey: _rootNavigatorKey,
           path: CallCompanionScreen.route,
           name: CallCompanionScreen.name,
-          builder: (context, _) {
-            return const CallCompanionScreen();
-          },
+          builder: (context, state) => const CallCompanionScreen(),
         ),
         GoRoute(
-          parentNavigatorKey: _rootNavigatorKey,
           path: LoadingScreen.route,
           name: LoadingScreen.name,
-          builder: (context, _) {
-            return const LoadingScreen();
-          },
+          builder: (context, state) => const LoadingScreen(),
         ),
       ],
     );
   }
+
+  FutureOr<String?> handleRedirect(
+      BuildContext context, GoRouterState state) async {
+    if (AuthController.instance.state == AuthState.authenticated) {
+      if (state.matchedLocation == LoginScreen.route) {
+        return HomeScreen.route;
+      }
+      return null;
+    } else {
+      if (state.matchedLocation != LoginScreen.route) {
+        return LoginScreen.route;
+      }
+      return null;
+    }
+  }
+
+  static void initialize() {
+    GetIt.instance.registerSingleton<GlobalRouter>(GlobalRouter());
+  }
+
+  static GlobalRouter get I => GetIt.instance.get<GlobalRouter>();
 }

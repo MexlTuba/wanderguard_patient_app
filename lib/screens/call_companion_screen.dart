@@ -132,7 +132,42 @@ class _CallCompanionScreenState extends State<CallCompanionScreen> {
                         ],
                       ),
                     ),
-                    CallCompanionButton(text: 'Call Companion'),
+                    SizedBox(height: 24),
+                    Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // Static background button
+                        ElevatedButton(
+                          onPressed: () {}, // does nothing
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: CustomColors
+                                .primaryColor, // Purple color from the design
+                            minimumSize: Size(double.infinity,
+                                50), // Match the design's button size
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: Text(
+                            'Call Companion', // The text to match the design
+                            style: TextStyle(color: Colors.white, fontSize: 16),
+                          ),
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: List.generate(
+                              5,
+                              (index) => CallCompanionButton(
+                                    companionAcctId:
+                                        _companion!.companionAcctId,
+                                    companionName:
+                                        '${_companion?.firstName ?? ''} ${_companion?.lastName ?? ''}',
+                                    callType: CallType.videoCall,
+                                    opacity: 0.0, // Invisible but interactive
+                                  )),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
